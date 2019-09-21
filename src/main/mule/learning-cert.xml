@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="908a4619-57c4-4533-96c8-1436668dada7" basePath="/learning" >
+		<http:listener-connection host="0.0.0.0" port="8080" />
+	</http:listener-config>
+	<configuration doc:name="Configuration" doc:id="64b7d70b-715a-4f5f-91da-a38360b7a83a" defaultErrorHandler-ref="globalErrorHandler"/>
+	<error-handler name="globalErrorHandler" doc:id="e80771c7-e729-407d-9ce0-5a9d9bf4cd70" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="202cd228-8ffd-4b23-a1fe-5c915c838267" >
+			<set-payload value="#['globalError']" doc:name="Set Payload" doc:id="44c75f24-0332-4513-af21-c8a3f7d9417e" />
+		</on-error-continue>
+	</error-handler>
+	<flow name="var" doc:id="7b3e30f5-c618-4736-8823-46ca9ecc4d9d" >
+		<http:listener doc:name="Listener" doc:id="a8298e0e-8b3b-4fb7-ac82-3d296245bdf0" config-ref="HTTP_Listener_config" path="/var"/>
+		<set-variable value="#[100]" doc:name="Set Variable" doc:id="30dfadd6-0e29-4787-9f05-8bd73ad9785c" variableName="test"/>
+		<set-payload value="#[5000]" doc:name="Set Payload" doc:id="21b4d3f5-1b6e-4bde-943a-60a7a851949d" />
+		<flow-ref doc:name="Flow Reference" doc:id="ea32264c-e4f3-4dac-9a44-c02bf08b13bc" name="learning-certSub_Flow" target="hello" targetValue="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3b03478e-705d-404c-83a6-88d4c84b43ef" message="#[vars.test]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="34e1e192-a9bc-4c89-9581-cca3516c69fd" message="#[vars.hello]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="47ce6362-957b-4b1e-8464-419ce1a11f97" message="#[payload]"/>
+	</flow>
+	<flow name="scatter-gather" doc:id="cc1f3fb2-61de-4f44-8b1c-505ad7512125" >
+		<http:listener doc:name="Listener" doc:id="83f2aaa3-2325-4779-adb0-fcf4c46948af" config-ref="HTTP_Listener_config" path="/scatter-gather"/>
+		<set-payload value="#[100]" doc:name="Set Payload" doc:id="e3e3721b-7ee8-4c34-bc4a-256850b9eb3e" />
+		<scatter-gather doc:name="Scatter-Gather" doc:id="f9a02dbf-b8bc-4a1b-b1db-9d0cc977febf" >
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="577ef5e4-916b-4299-93cc-7af1fa463586" message="#['a ' ++ payload]"/>
+				<set-payload value="#[payload + 10]" doc:name="Set Payload" doc:id="64ab374c-f3fa-4f54-a009-01d0d6522d6c" />
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="69f4c9e4-8da0-4036-b202-e305cc2fd424" message="#['b ' ++ payload]"/>
+				<set-payload value="#[payload + 20]" doc:name="Set Payload" doc:id="bb89bd6e-6c98-4686-a340-1cd6108b9183" />
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="2d0f8c50-420b-46f9-90bd-febc7c1bbba6" message="#['c ' ++ payload]"/>
+				<set-payload value="#[payload + 30]" doc:name="Set Payload" doc:id="27f3c3c0-48bb-4b34-b5a8-218fcfb2c1f7" />
+			</route>
+		</scatter-gather>
+		<logger level="INFO" doc:name="Logger" doc:id="0503c350-751d-455b-a9ce-24153edecb66" message="#[output application/json --- payload]"/>
+		
+	</flow>
+	<flow name="error" doc:id="b8ce50e7-7b30-419e-8ba1-5b3c967c9e28" >
+		<http:listener doc:name="Listener" doc:id="bb5dfdd4-6fd6-4972-8d9c-2cfd97151743" config-ref="HTTP_Listener_config" path="/error"/>
+		<validation:is-number doc:id="7d864ff2-cd30-40cb-9d8a-2cd8a0fe97c4" value="#['asd']" numberType="INTEGER" message="#['error validate']"/>
+		<logger level="INFO" doc:name="Logger" doc:id="277a7196-89b1-4519-a858-76dd62de283a" message="#['flow finished']"/>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="bd845d00-7cca-455f-97c7-7971e742cda4" >
+				<set-payload value="#['error main']" doc:name="Set Payload" doc:id="e0586265-db31-4a42-8ea2-0687221b501d" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="batch" doc:id="fc086dd4-12bb-4653-818b-bb02f4620c2f" >
+		<http:listener doc:name="Listener" doc:id="3a8d7eac-bb23-4a5b-874e-73f51bd816ad" config-ref="HTTP_Listener_config" path="/batch"/>
+		<set-payload value="#[[
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+]]" doc:name="Set Payload" doc:id="4c434481-91bd-4c91-8d7a-fb71f0130413" />
+		<foreach doc:name="For Each" doc:id="810c05e3-6939-488c-8afe-36d4b9bab380" batchSize="50" collection="payload">
+			<logger level="INFO" doc:name="Logger" doc:id="13d73fa6-800f-4338-ac38-01c872e5422e" message="#[payload]" />
+		</foreach>
+		<batch:job jobName="learning-certBatch_Job" doc:id="0e8350f4-cbfa-4d56-a21a-75600cb71b3e" blockSize="1000">
+			<batch:process-records >
+				<batch:step name="Batch_Step1" doc:id="4002b6ae-5411-4f3f-bbd6-8e8062aa55e3" >
+					<logger level="INFO" doc:name="Logger" doc:id="3a619a27-1829-4cfe-90c8-04d626a35f2a" message="#['step 1: ' ++ payload]"/>
+					<set-payload value="#[payload + 1]" doc:name="Set Payload" doc:id="09bc3a95-e0a4-4771-a49a-c90c7ded2312" />
+				</batch:step>
+				<batch:step name="Batch_Step" doc:id="e40d950f-9729-45b6-a6c8-d5a247ae7b5a" >
+					<logger level="INFO" doc:name="Logger" doc:id="e906d028-0283-458c-ae5d-e8251c46ad78" message="#['step 2: ' ++ payload]"/>
+					<set-payload value="#[payload + 2]" doc:name="Set Payload" doc:id="6c64a742-e895-4ccc-8ed2-74a9bc48138f" />
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="1ec74265-051e-4196-964c-c4a670a026e6" message="#['complete: ' ++ payload joinBy(',')]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<sub-flow name="learning-certSub_Flow" doc:id="44fc2010-dd41-4c0b-a5c7-7d2c7bfe9c4c" >
+		<set-variable value="#[200]" doc:name="Set Variable" doc:id="f26db67d-ced9-4147-84ea-d66b089f49eb" variableName="test"/>
+		<set-payload value="#[500]" doc:name="Set Payload" doc:id="29c97b45-173f-4e3d-ab48-d91f4b468ee4" />
+	</sub-flow>
+	<flow name="learning-certFlow" doc:id="587f4be9-0553-45f4-9f84-1d179f3ba527" >
+		<scheduler doc:name="Scheduler" doc:id="b0308f7c-5320-4e24-a604-829aa1e4d891" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="60000"/>
+			</scheduling-strategy>
+		</scheduler>
+		<round-robin doc:name="Round Robin" doc:id="9e373caa-b76d-4d85-b268-760dd7385677" tracking:enable-default-events="true">
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="a5c2e181-82c1-4df6-b92b-a17038448ac1" message="#['route 1 : ']"/>
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="5918f4d3-5cbb-4a91-b926-21de9f82e2a2" message="#['route 2 : ']"/>
+			</route>
+		</round-robin>
+	</flow>
+</mule>
